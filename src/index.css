@@ -100,15 +100,16 @@
     /* Sizing floor rather than a breakpoint. Cramming three clusters into a
        phone width would drop keys under 24px, so the dock scrolls sideways and
        every key keeps a real target. */
-    min-width: 940px;
+    min-width: 1000px;
   }
 
-  /* Left: POS function column. */
+  /* Left: POS function column. Four across now, sized to keep the keys a real
+     target while giving the extra column room to breathe. */
   .kbd-fn {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 0.375rem;
-    width: 168px;
+    width: 240px;
     padding-right: 0.5rem;
     border-right: 1px solid var(--kbd-edge);
   }

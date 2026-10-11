@@ -171,7 +171,7 @@ export const App: React.FC = () => {
           isOpen={isCartOpen}
           onClose={() => setIsCartOpen(false)}
           side="right"
-          widthClassName="w-[380px] max-w-[92vw]"
+          widthClassName="w-[380px] sm:w-[420px] max-w-[92vw]"
           ariaLabel="Current cart"
         >
           {cart}

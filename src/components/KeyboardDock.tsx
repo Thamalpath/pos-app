@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { cn } from "@pos/ui";
+import { Delete } from "lucide-react";
 import {
   actionKey,
   charKey,
@@ -8,21 +9,13 @@ import {
 import { DOCK_RIGHT_CLASS } from "../lib/layout";
 
 interface KeyDef {
-  /** Glyph on the cap. Lowercase letters are uppercased by the render when
-   *  Caps or Shift is engaged. */
   label: string;
-  /** Emitted to the sink. Omitted for keys that only change local state. */
+  icon?: React.ReactNode;
   key?: ReturnType<typeof charKey> | ReturnType<typeof actionKey>;
   variant?: "char" | "fn" | "num" | "action" | "edit" | "accent";
-  /** Grid columns to occupy. Defaults to 1. */
   span?: 2 | 3 | 4 | 5 | 6;
-  /** Rows to occupy. Only the commit key uses this. */
   rowSpan?: 2;
   title?: string;
-  /**
-   * Reserved for a future handler. Rendered flat and dashed and emits nothing,
-   * so a key can be laid out now without pretending to work.
-   */
   placeholder?: boolean;
 }
 
@@ -37,16 +30,13 @@ const NUM = (s: string): KeyDef[] =>
     variant: "num" as const,
   }));
 
-/**
- * Left cluster — POS function keys, three across, four rows to match the other
- * clusters. Everything that is not a letter or a digit lives here so the centre
- * stays a clean QWERTY block.
- */
 const FN_BOARD: KeyDef[] = [
-  { label: "Esc", key: actionKey("escape"), variant: "fn", title: "Close" },
-  { label: "Tab", key: actionKey("tab"), variant: "fn", title: "Next field" },
-  { label: "Caps", variant: "fn", title: "Caps lock" },
-  { label: "⇧", variant: "fn", title: "Shift (next letter only)" },
+  {
+    label: "⇧",
+    variant: "fn",
+    title: "Shift — tap to toggle capitals",
+  },
+
   {
     label: "Held",
     key: actionKey("open-held"),
@@ -60,28 +50,34 @@ const FN_BOARD: KeyDef[] = [
     title: "Focus search / barcode",
   },
   { label: "%", key: actionKey("percent"), variant: "fn", title: "Percent" },
+
   { label: "Disc", placeholder: true, title: "Discount — not wired up yet" },
   { label: "Cust", placeholder: true, title: "Customer — not wired up yet" },
   { label: "Park", placeholder: true, title: "Park ticket — not wired up yet" },
   { label: "Print", placeholder: true, title: "Reprint — not wired up yet" },
+
+  { label: "Qty", placeholder: true, title: "Quantity — not wired up yet" },
+  { label: "Void", placeholder: true, title: "Void line — not wired up yet" },
+  {
+    label: "Drawer",
+    placeholder: true,
+    title: "Open cash drawer — not wired up yet",
+  },
+  { label: "Refund", placeholder: true, title: "Refund — not wired up yet" },
+
   {
     label: "More",
     placeholder: true,
+    span: 4,
     title: "More actions — not wired up yet",
   },
 ];
 
-/**
- * Centre cluster — ten columns, four rows. The top three rows are a clean
- * QWERTY block; the modifiers live in the left cluster, so nothing interrupts
- * the letter grid. Row four carries the barcodes and SKU strings that turn up
- * in the search field.
- */
 const ALPHA_BOARD: KeyDef[] = [
-  ...ALPHA("QWERTYUIOP"),
-  ...ALPHA("ASDFGHJKL"),
+  ...ALPHA("qwertyuiop"),
+  ...ALPHA("asdfghjkl"),
   { label: ";", key: charKey(";") },
-  ...ALPHA("ZXCVBNM"),
+  ...ALPHA("zxcvbnm"),
   ...SYMBOLS(",./"),
 
   {
@@ -94,15 +90,11 @@ const ALPHA_BOARD: KeyDef[] = [
   ...SYMBOLS("-+*=#?"),
 ];
 
-/**
- * Right cluster — a cash-drawer pad, laid out 7-8-9 downward exactly like a
- * real register. Commit runs down two rows because it is the one key a cashier
- * hits with a whole hand.
- */
 const NUM_BOARD: KeyDef[] = [
   ...NUM("789"),
   {
     label: "Backspace",
+    icon: <Delete className="w-4.5 h-4.5" aria-hidden="true" />,
     key: actionKey("backspace"),
     variant: "edit",
     title: "Backspace",
@@ -155,14 +147,9 @@ export const KeyboardDock: React.FC = () => {
   const setHeight = useKeyboardDock((s) => s.setHeight);
   const accepts = useKeyboardDock((s) => s.accepts);
 
-  const [isCaps, setIsCaps] = useState(false);
-  // One-shot: consumed by the next letter, unlike the Caps lock.
   const [isShiftArmed, setIsShiftArmed] = useState(false);
-
   const dragStartY = useRef<number | null>(null);
-
   const suppressClick = useRef(false);
-
   const dockRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -230,10 +217,6 @@ export const KeyboardDock: React.FC = () => {
         press(charKey(event.key));
         event.preventDefault();
       } else if (/^[a-zA-Z]$/.test(event.key)) {
-        // The board merged into one keypad, so the hardware keyboard has to
-        // offer the letters too -- otherwise typing a product name with a
-        // USB keyboard silently drops every character. `event.key` is already
-        // cased, so Shift+letter arrives uppercase.
         press(charKey(event.key));
         event.preventDefault();
       } else if (event.key === "Backspace") {
@@ -252,15 +235,10 @@ export const KeyboardDock: React.FC = () => {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [isOpen, press]);
 
-  // Shared by both clusters, so a key behaves identically wherever it sits.
   const renderKey = (def: KeyDef) => {
     const isLetter = /^[a-z]$/i.test(def.label);
-    const isCapsKey = def.label === "Caps";
     const isShiftKey = def.label === "⇧";
-    const isUpper = isLetter && (isCaps || isShiftArmed);
-    // Both clusters are on screen for search (any key) and for cash tender
-    // (digits only), so the sink declares what it will take and the rest of
-    // the board greys out rather than silently ignoring the press.
+    const isUpper = isLetter && isShiftArmed;
     const isMuted = Boolean(def.key && accepts && !accepts(def.key));
     const isDisabled = isMuted || Boolean(def.placeholder);
 
@@ -272,32 +250,35 @@ export const KeyboardDock: React.FC = () => {
           isMuted ? `${def.title ?? def.label} — not used here` : def.title
         }
         aria-label={def.title ?? def.label}
-        aria-pressed={isCapsKey ? isCaps : undefined}
+        aria-pressed={isShiftKey ? isShiftArmed : undefined}
         disabled={isDisabled}
         onClick={() => {
-          if (isCapsKey) {
-            setIsCaps((prev) => !prev);
+          if (isShiftKey) {
+            setIsShiftArmed((prev) => !prev);
             return;
           }
-          if (isShiftKey) {
-            setIsShiftArmed(true);
+          if (isLetter) {
+            press(
+              charKey(
+                isUpper ? def.label.toUpperCase() : def.label.toLowerCase(),
+              ),
+            );
+            if (isShiftArmed) setIsShiftArmed(false);
             return;
           }
           if (def.key) press(def.key);
-          // One-shot shift: applies to exactly one letter.
-          if (isLetter && isShiftArmed) setIsShiftArmed(false);
         }}
         className={cn(
           "kbd-key",
           VARIANT_CLASS[def.variant ?? "char"],
           def.span && SPAN_CLASS[def.span],
           def.rowSpan === 2 && "kbd-row-2",
-          isCapsKey && isCaps && "kbd-key--latched",
+          isShiftKey && isShiftArmed && "kbd-key--latched",
           isMuted && "kbd-key--muted",
           def.placeholder && "kbd-key--placeholder",
         )}
       >
-        {isUpper ? def.label.toUpperCase() : def.label}
+        {def.icon ?? (isUpper ? def.label.toUpperCase() : def.label)}
       </button>
     );
   };
@@ -328,9 +309,6 @@ export const KeyboardDock: React.FC = () => {
 
           <div className="kbd-scroll pb-1">
             <div className="kbd-board">
-              {/* Three clusters: POS functions left, QWERTY centre, cash pad
-                  right. All three are always visible — nothing is hidden behind
-                  a mode switch. */}
               <div className="kbd-fn">{FN_BOARD.map(renderKey)}</div>
               <div className="kbd-alpha">{ALPHA_BOARD.map(renderKey)}</div>
               <div className="kbd-numpad">{NUM_BOARD.map(renderKey)}</div>

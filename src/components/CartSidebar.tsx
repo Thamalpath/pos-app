@@ -1,7 +1,7 @@
-import React from 'react';
-import { useCartStore } from '../stores/cartStore';
-import { formatAmount, CURRENCY_LABEL } from '@pos/shared';
-import { Button } from '@pos/ui';
+import React from "react";
+import { useCartStore } from "../stores/cartStore";
+import { formatAmount, CURRENCY_LABEL } from "@pos/shared";
+import { Button } from "@pos/ui";
 import {
   Trash2,
   Plus,
@@ -10,24 +10,19 @@ import {
   User,
   PauseCircle,
   CreditCard,
-  X
-} from 'lucide-react';
+  X,
+} from "lucide-react";
 
 interface CartSidebarProps {
   onOpenPayment: () => void;
   onSelectCustomer: () => void;
-  /** Adds a close button when rendered inside a mobile drawer. */
   onClose?: () => void;
 }
 
-/**
- * Cart panel content. Rendered docked beside the catalog from `lg` upwards and
- * inside an off-canvas drawer below that, so this component stays layout-free.
- */
 export const CartSidebar: React.FC<CartSidebarProps> = ({
   onOpenPayment,
   onSelectCustomer,
-  onClose
+  onClose,
 }) => {
   const {
     items,
@@ -36,7 +31,7 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
     clearCart,
     holdCurrentCart,
     customerName,
-    getTotals
+    getTotals,
   } = useCartStore();
 
   const totals = getTotals();
@@ -50,12 +45,12 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
           className="flex items-center gap-2 text-xs font-medium text-fg-muted hover:text-fg bg-surface-3 hover:bg-surface-4 px-3 py-2 rounded-lg border border-line transition min-w-0"
         >
           <User className="w-3.5 h-3.5 text-brand-fg shrink-0" />
-          <span className="truncate">{customerName || 'Walk-in Customer'}</span>
+          <span className="truncate">{customerName || "Walk-in Customer"}</span>
         </button>
 
         <div className="flex items-center gap-2 shrink-0">
           <span className="text-xs text-fg-muted font-semibold tabular whitespace-nowrap">
-            {items.length} {items.length === 1 ? 'Item' : 'Items'}
+            {items.length} {items.length === 1 ? "Item" : "Items"}
           </span>
           {onClose && (
             <button
@@ -83,15 +78,19 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
             </p>
           </div>
         ) : (
-          items.map(item => (
+          items.map((item) => (
             <div
               key={item.id}
               className="p-3 bg-surface-2 border border-line rounded-xl flex items-center justify-between gap-2 sm:gap-3 group hover:border-line-strong transition"
             >
               <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-fg text-sm truncate">{item.name}</h4>
+                <h4 className="font-semibold text-fg text-sm truncate">
+                  {item.name}
+                </h4>
                 <div className="flex items-center gap-2 mt-1 text-xs text-fg-muted">
-                  <span className="tabular">{formatAmount(item.price)} each</span>
+                  <span className="tabular">
+                    {formatAmount(item.price)} each
+                  </span>
                   {item.taxRatePercent > 0 && (
                     <span className="text-[10px] text-fg-subtle">
                       ({item.taxRatePercent}% Tax)
@@ -105,17 +104,17 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
                 <button
                   onClick={() => updateQuantity(item.id, -1)}
                   aria-label={`Decrease ${item.name} quantity`}
-                  className="w-8 h-8 sm:w-6 sm:h-6 rounded flex items-center justify-center text-fg-muted hover:text-fg hover:bg-surface-3 transition"
+                  className="w-8 h-8 sm:w-7 sm:h-7 rounded flex items-center justify-center text-fg-muted hover:text-fg hover:bg-surface-3 transition"
                 >
                   <Minus className="w-3.5 h-3.5" />
                 </button>
-                <span className="w-7 sm:w-6 text-center text-xs font-bold text-fg tabular">
+                <span className="w-7 sm:w-8 text-center text-xs font-bold text-fg tabular">
                   {item.quantity}
                 </span>
                 <button
                   onClick={() => updateQuantity(item.id, 1)}
                   aria-label={`Increase ${item.name} quantity`}
-                  className="w-8 h-8 sm:w-6 sm:h-6 rounded flex items-center justify-center text-fg-muted hover:text-fg hover:bg-surface-3 transition"
+                  className="w-8 h-8 sm:w-7 sm:h-7 rounded flex items-center justify-center text-fg-muted hover:text-fg hover:bg-surface-3 transition"
                 >
                   <Plus className="w-3.5 h-3.5" />
                 </button>
@@ -155,7 +154,9 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
         {totals.discountTotal > 0 && (
           <div className="flex justify-between text-xs text-warning-fg">
             <span>Discounts</span>
-            <span className="tabular">-{formatAmount(totals.discountTotal)}</span>
+            <span className="tabular">
+              -{formatAmount(totals.discountTotal)}
+            </span>
           </div>
         )}
         <div className="flex justify-between text-xs text-fg-muted">
@@ -202,7 +203,9 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
           className="w-full text-base font-bold items-center justify-center gap-2 py-3.5"
         >
           <CreditCard className="w-5 h-5 shrink-0" />
-          <span className="truncate tabular">Pay {formatAmount(totals.grandTotal)} {CURRENCY_LABEL}</span>
+          <span className="truncate tabular">
+            Pay {formatAmount(totals.grandTotal)} {CURRENCY_LABEL}
+          </span>
         </Button>
       </div>
     </div>

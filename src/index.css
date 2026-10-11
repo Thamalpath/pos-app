@@ -1,0 +1,287 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Body/canvas colours are owned by the shared preset (`@pos/ui/tailwind-preset`),
+ * which injects them from the theme tokens. They are deliberately not repeated
+ * here with `@apply`: `@apply` needs the resolved Tailwind theme at build time,
+ * so it turns a wrong config path into a fatal PostCSS error instead of a
+ * graceful fallback.
+ */
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  /* POS terminals run full-bleed; never bounce or rubber-band the shell. */
+  body {
+    overscroll-behavior: none;
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/*
+ * On-screen register keyboard.
+ *
+ * Lives here rather than in the component because the depth effect is built
+ * from four stacked box-shadows plus a press transform, and it needs its own
+ * colour variables per theme. Written as raw CSS on purpose: `@apply` needs the
+ * resolved Tailwind theme at build time and turns a config mistake into a fatal
+ * PostCSS error, which is exactly the failure documented above.
+ *
+ * The 3D read comes from a solid "lip" under each key rather than a gradient.
+ * Gradients looked synthetic next to the flat, print-like rest of the POS;
+ * a hard bottom edge plus a one-pixel top gloss reads as a moulded keycap and
+ * survives being pressed, which a gradient cannot do.
+ */
+@layer components {
+  :root {
+    --kbd-face: rgb(var(--c-surface-3));
+    --kbd-gloss: rgb(var(--c-surface));
+    --kbd-edge: rgb(var(--c-line-strong));
+    --kbd-lip: rgb(var(--c-surface-4));
+    --kbd-face-text: rgb(var(--c-fg));
+
+    --kbd-muted-face: rgb(var(--c-surface-2));
+    --kbd-muted-text: rgb(var(--c-fg-muted));
+
+    /* Left column — POS function keys, amber. Third hue so all three clusters
+       are separable at a glance instead of two sharing a tint. */
+    --kbd-fn-face: rgb(var(--c-warning-soft));
+    --kbd-fn-gloss: rgb(var(--c-surface));
+    --kbd-fn-lip: rgb(var(--c-warning-line));
+    --kbd-fn-text: rgb(var(--c-warning-fg));
+
+    /* Right cluster — cash pad, violet. A real register separates the clusters
+       by colour, and it means the eye lands on the digits first without a label
+       explaining it. Tinted off the secondary hue rather than the primary so the
+       pad does not read as just more of the same indigo. */
+    --kbd-num-face: rgb(var(--c-accent-soft));
+    --kbd-num-gloss: rgb(var(--c-surface));
+    --kbd-num-lip: rgb(var(--c-accent-line));
+    --kbd-num-text: rgb(var(--c-accent-fg));
+
+    --kbd-accent-face: rgb(var(--c-brand));
+    --kbd-accent-lip: rgb(var(--c-brand-hover));
+    --kbd-accent-gloss: rgb(var(--c-brand-soft));
+    --kbd-accent-text: rgb(var(--c-fg-on-brand));
+  }
+
+  .dark {
+    /* In dark mode the shadowed side of a key must go *darker*, but
+       --c-surface-4 is lighter than --c-surface-3 there. The canvas is the
+       only token reliably below the key face, so it does the shadowing. */
+    --kbd-lip: rgb(var(--c-canvas));
+    --kbd-gloss: rgb(var(--c-surface-4));
+    --kbd-num-gloss: rgb(var(--c-accent-line));
+    --kbd-fn-gloss: rgb(var(--c-warning-line));
+  }
+
+  /*
+   * Three clusters: function keys left, letters centre, cash pad right.
+   *
+   * Width is the actual fix for the pad looking packed. Sizing the outer
+   * columns explicitly and letting only the letters flex means the digits get a
+   * guaranteed width instead of whatever is left over after a 1fr block has
+   * taken the slack — that leftover was the whole problem. Every cluster is
+   * exactly four rows so the rows line up across the seams.
+   */
+  .kbd-board {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: stretch;
+    gap: 0;
+    /* Sizing floor rather than a breakpoint. Cramming three clusters into a
+       phone width would drop keys under 24px, so the dock scrolls sideways and
+       every key keeps a real target. */
+    min-width: 940px;
+  }
+
+  /* Left: POS function column. */
+  .kbd-fn {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.375rem;
+    width: 168px;
+    padding-right: 0.5rem;
+    border-right: 1px solid var(--kbd-edge);
+  }
+
+  /* Centre: QWERTY block. The only cluster that flexes. */
+  .kbd-alpha {
+    display: grid;
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    gap: 0.4375rem;
+    padding: 0 0.5rem;
+    border-right: 1px solid var(--kbd-edge);
+  }
+
+  /* Right: cash pad. Wider gap than the other two, on purpose. */
+  .kbd-numpad {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.5rem;
+    width: 288px;
+    padding-left: 0.5rem;
+  }
+
+  .kbd-key {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.75rem;
+    border-radius: 6px;
+    border: 1px solid var(--kbd-edge);
+    background-color: var(--kbd-face);
+    color: var(--kbd-face-text);
+    box-shadow:
+      inset 0 1px 0 var(--kbd-gloss),
+      0 2px 0 var(--kbd-lip);
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+      transform 80ms ease,
+      box-shadow 80ms ease,
+      background-color 120ms ease;
+    touch-action: manipulation;
+  }
+
+  .kbd-key:hover {
+    background-color: var(--kbd-muted-face);
+  }
+
+  /* Pressed: the key travels down into its own lip and the shadow collapses. */
+  .kbd-key:active,
+  .kbd-key[data-pressed='true'] {
+    transform: translateY(2px);
+    box-shadow: inset 0 1px 0 rgb(0 0 0 / 0.06);
+  }
+
+  .kbd-key:focus-visible {
+    outline: 2px solid rgb(var(--c-brand) / 0.9);
+    outline-offset: 2px;
+  }
+
+  .kbd-key--action {
+    background-color: var(--kbd-muted-face);
+    color: var(--kbd-muted-text);
+  }
+
+  .kbd-key--fn {
+    background-color: var(--kbd-fn-face);
+    color: var(--kbd-fn-text);
+    border-color: var(--kbd-fn-lip);
+    box-shadow:
+      inset 0 1px 0 var(--kbd-fn-gloss),
+      0 2px 0 var(--kbd-fn-lip);
+  }
+
+  .kbd-key--fn:hover {
+    background-color: var(--kbd-fn-gloss);
+  }
+
+  /* Reserved keys awaiting a real handler. Flat and dashed so they never read
+     as something a cashier can press today. */
+  .kbd-key--placeholder {
+    border-style: dashed;
+    opacity: 0.62;
+    box-shadow: none;
+  }
+
+  .kbd-key--num {
+    background-color: var(--kbd-num-face);
+    color: var(--kbd-num-text);
+    border-color: var(--kbd-num-lip);
+    box-shadow:
+      inset 0 1px 0 var(--kbd-num-gloss),
+      0 2px 0 var(--kbd-num-lip);
+  }
+
+  .kbd-key--num:hover {
+    background-color: var(--kbd-num-gloss);
+  }
+
+  .kbd-key--edit {
+    background-color: var(--kbd-muted-face);
+    color: var(--kbd-fg);
+  }
+
+  .kbd-key--accent {
+    background-color: var(--kbd-accent-face);
+    color: var(--kbd-accent-text);
+    border-color: var(--kbd-accent-lip);
+    box-shadow:
+      inset 0 1px 0 var(--kbd-accent-gloss),
+      0 2px 0 var(--kbd-accent-lip);
+  }
+
+  .kbd-key--accent:hover {
+    background-color: var(--kbd-accent-lip);
+  }
+
+  /* Caps engaged: reads as "latched", not just pressed. */
+  .kbd-key--latched {
+    background-color: var(--kbd-accent-face);
+    color: var(--kbd-accent-text);
+    border-color: var(--kbd-accent-lip);
+  }
+
+  /* Keys the active sink ignores, e.g. letters while a cash amount is being
+     typed. Flattened and faded so they read as unavailable at a glance
+     instead of looking broken when pressed. */
+  .kbd-key--muted {
+    opacity: 0.4;
+    box-shadow: inset 0 1px 0 rgb(0 0 0 / 0.04);
+    cursor: not-allowed;
+  }
+
+  .kbd-key--muted:hover {
+    background-color: var(--kbd-face);
+  }
+
+  .kbd-span-2 {
+    grid-column: span 2;
+  }
+
+  .kbd-span-3 {
+    grid-column: span 3;
+  }
+
+  .kbd-span-4 {
+    grid-column: span 4;
+  }
+
+  .kbd-span-5 {
+    grid-column: span 5;
+  }
+
+  .kbd-span-6 {
+    grid-column: span 6;
+  }
+
+  /* Commit key runs down two rows of the pad, like a real register. */
+  .kbd-row-2 {
+    grid-row: span 2;
+  }
+
+  /* Horizontal scroll for the board without leaking a scrollbar. */
+  .kbd-scroll {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+
+  .kbd-scroll::-webkit-scrollbar {
+    display: none;
+  }
+}

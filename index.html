@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="description" content="OmniPOS Terminal" />
+    <meta name="theme-color" content="#f4f4f2" />
+    <title>OmniPOS Terminal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!--
+      Plus Jakarta Sans. Loaded with display=swap and paired with a full system
+      fallback stack in the Tailwind preset, so a terminal with no network still
+      renders prices in a sane face instead of holding back the first paint.
+    -->
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    />
+    <!-- Applied before first paint to avoid a flash of the wrong theme. -->
+    <!-- Mirrors applyResolvedTheme/THEME_STORAGE_KEY in @pos/ui. -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('omnipos-theme');
+          var preference =
+            stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'light';
+          var resolved =
+            preference === 'system'
+              ? window.matchMedia('(prefers-color-scheme: dark)').matches
+                ? 'dark'
+                : 'light'
+              : preference;
+          var root = document.documentElement;
+          root.classList.toggle('dark', resolved === 'dark');
+          root.classList.toggle('light', resolved === 'light');
+          root.setAttribute('data-theme', resolved);
+          root.style.colorScheme = resolved;
+        } catch (error) {
+          /* storage blocked - fall back to the light default */
+        }
+      })();
+    </script>
+  </head>
+  <body class="bg-canvas text-fg antialiased font-sans overflow-hidden select-none">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
